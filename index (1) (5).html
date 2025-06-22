@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> XIT </title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+      <h1 class="title">  </h1>
+      <p id=" "></p>
+      <script src="script.js"></script>
+  </body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Editor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Photo Editor</h1>
+        </header>
+        
+        <div class="main-content">
+            <div class="toolbar">
+                <div class="tool-section">
+                    <h3>Upload</h3>
+                    <input type="file" id="file-input" accept="image/*,video/*">
+                </div>
+                
+                <div class="tool-section">
+                    <h3>Filters</h3>
+                    <button id="grayscale">Grayscale</button>
+                    <button id="sepia">Sepia</button>
+                    <button id="invert">Invert</button>
+                    <button id="blur">Blur</button>
+                </div>
+                
+                <div class="tool-section">
+                    <h3>Adjustments</h3>
+                    <label>Brightness
+                        <input type="range" id="brightness" min="0" max="200" value="100">
+                    </label>
+                    <label>Contrast
+                        <input type="range" id="contrast" min="0" max="200" value="100">
+                    </label>
+                    <label>Saturation
+                        <input type="range" id="saturation" min="0" max="200" value="100">
+                    </label>
+                </div>
+                
+                <div class="tool-section">
+                    <h3>Tools</h3>
+                    <button id="crop">Crop</button>
+                    <button id="rotate">Rotate</button>
+                    <button id="reset">Reset</button>
+                </div>
+                
+                <div class="tool-section">
+                    <h3>Export</h3>
+                    <button id="download">Download Image</button>
+                </div>
+            </div>
+            
+            <div class="editor-area">
+                <div class="media-container">
+                    <canvas id="canvas"></canvas>
+                    <video id="video-preview" controls style="display:none;"></video>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
