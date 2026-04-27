@@ -1,83 +1,104 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XIT - Pro Gaming</title>
+    <title>XIT - Hybrid Messenger & Gaming</title>
     <style>
-        :root { --xit-black: #000000; --wa-green: #25D366; --bg: #f4f7f6; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Segoe UI', sans-serif; }
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); overflow: hidden; }
+        :root {
+            --xit-black: #000000; --wa-green: #25D366; --wa-bg: #e5ddd5;
+            --modal-bg: rgba(0,0,0,0.85); --glass: rgba(255, 255, 255, 0.1);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #fff; overflow: hidden; }
 
-        /* UI Elements */
-        header { background: var(--xit-black); color: white; position: relative; z-index: 10; }
-        .top-bar { padding: 15px; font-weight: bold; font-size: 20px; display: flex; justify-content: space-between; }
-        .tabs { display: flex; background: #111; }
-        .tab { flex: 1; padding: 12px; text-align: center; color: #888; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; }
-        .tab.active { color: white; border-bottom-color: white; }
+        /* Animations */
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        .view-container { display: flex; width: 300%; height: calc(100vh - 105px); transition: 0.3s; }
-        .view { width: 33.333%; height: 100%; overflow-y: auto; background: white; }
+        /* Global UI */
+        header { background: var(--xit-black); color: white; z-index: 1000; position: relative; }
+        .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 15px; font-size: 20px; font-weight: bold; }
+        .tabs { display: flex; background: #000; border-bottom: 1px solid #333; }
+        .tab { flex: 1; padding: 12px; text-align: center; color: #888; cursor: pointer; transition: 0.3s; font-weight: 600; }
+        .tab.active { color: white; border-bottom: 3px solid white; }
 
-        /* Game Screen */
-        #game-screen { position: fixed; top: 0; left: 100%; width: 100%; height: 100%; background: #fff; z-index: 9999; transition: 0.3s; display: flex; flex-direction: column; }
-        #game-screen.open { left: 0; }
-        .game-header { background: #000; color: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .view-container { display: flex; width: 300%; height: calc(100vh - 105px); transition: transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1); }
+        .view { width: 33.333%; height: 100%; overflow-y: auto; background: #fff; }
+
+        /* Sidebar */
+        #sidebar { position: fixed; left: -285px; top: 0; width: 280px; height: 100%; background: white; z-index: 3000; transition: 0.3s; box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+        #sidebar.open { left: 0; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2500; }
+
+        /* Game List Styling */
+        .game-card { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #eee; margin: 10px; background: #f9f9f9; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .game-info { flex: 1; margin-left: 15px; }
+        .game-btn { background: var(--wa-green); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .game-btn:active { transform: scale(0.9); }
+
+        /* Game Screen Fullscreen */
+        #game-screen { position: fixed; inset: 0; background: #fff; z-index: 5000; display: none; flex-direction: column; animation: slideIn 0.3s ease-out; }
+        .game-header { background: #000; color: #fff; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
         
-        .voice-section { background: #eee; padding: 10px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid #ccc; }
-        .user-card { display: flex; flex-direction: column; align-items: center; min-width: 75px; position: relative; }
-        .avatar { width: 45px; height: 45px; border-radius: 50%; background: #333; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid var(--wa-green); }
-        .audience .avatar { border-color: #ff9800; }
-        .mute-label { position: absolute; bottom: 15px; right: 10px; background: red; border-radius: 50%; width: 15px; height: 15px; display: none; }
+        .voice-nodes { display: flex; gap: 10px; padding: 10px; background: #f0f0f0; overflow-x: auto; border-bottom: 1px solid #ddd; }
+        .node { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; background: #444; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid var(--wa-green); position: relative; }
+        .node.audience .avatar { border-color: #ff9800; }
+        .mic-off-icon { position: absolute; top: -2px; right: -2px; background: red; color: white; border-radius: 50%; font-size: 10px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
 
-        #game-canvas { flex: 1; display: flex; align-items: center; justify-content: center; background: #e5ddd5; position: relative; }
+        #game-stage { flex: 1; background: var(--wa-bg); display: flex; align-items: center; justify-content: center; position: relative; }
         
-        /* Tic Tac Toe Grid */
-        .ttt-grid { display: grid; grid-template-columns: repeat(3, 90px); grid-template-rows: repeat(3, 90px); gap: 10px; }
-        .cell { background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; }
+        /* Tic Tac Toe Board */
+        .ttt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 300px; height: 300px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 15px; }
+        .cell { background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 45px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: 0.1s; }
+        .cell:active { background: #eee; }
 
-        .controls { padding: 15px; display: flex; gap: 10px; background: #fff; border-top: 1px solid #ddd; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-mic { background: #000; color: white; }
-        .btn-quit { background: #ff4d4d; color: white; }
+        .game-footer { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #ddd; }
+        .f-btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: white; font-size: 16px; }
 
-        /* Game List */
-        .game-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; }
-        .join-btn { background: var(--wa-green); color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; }
-
-        #login-screen { position: fixed; inset: 0; background: #000; z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        input { padding: 12px; border-radius: 8px; border: none; width: 80%; max-width: 300px; margin-bottom: 15px; }
+        #login-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
-        <h1>XIT GAMING</h1>
-        <input type="text" id="username" placeholder="Enter Username">
-        <button class="btn" style="background:white; width:200px;" onclick="doLogin()">Get Started</button>
+        <h1 style="letter-spacing: 5px;">XIT</h1>
+        <input type="text" id="username" placeholder="Username" style="padding: 15px; border-radius: 10px; width: 80%; border: none; margin-bottom: 20px;">
+        <button onclick="login()" style="padding: 15px 40px; border-radius: 30px; border: none; background: white; font-weight: bold;">START</button>
     </div>
+
+    <div id="sidebar">
+        <div style="padding: 50px 20px 20px; background: #000; color: #fff;">
+            <div id="my-initial" style="width: 60px; height: 60px; background: var(--wa-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin-bottom: 10px;">?</div>
+            <b id="my-name-display">@username</b>
+        </div>
+        <div style="padding: 20px; border-bottom: 1px solid #eee;" onclick="switchTab(1); toggleSidebar(false);">🎮 Online Games</div>
+        <div style="padding: 20px; border-bottom: 1px solid #eee;" onclick="localStorage.clear(); location.reload();">🚪 Logout</div>
+    </div>
+    <div class="overlay" id="overlay" onclick="toggleSidebar(false)"></div>
 
     <div id="game-screen">
         <div class="game-header">
-            <span onclick="quitGame()" style="cursor:pointer; font-size:20px;">✕ Exit</span>
-            <b id="game-name">Loading...</b>
-            <span id="player-count">0/0</span>
+            <div onclick="exitGame()" style="cursor: pointer; font-size: 20px;">✕ Exit</div>
+            <div id="game-title">Waiting...</div>
+            <div onclick="copyGameLink()" style="background: white; color: black; padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; cursor: pointer;">🔗 Link</div>
         </div>
-        
-        <div class="voice-section" id="voice-section"></div>
-
-        <div id="game-canvas">
-            <div id="game-msg">Finding Players...</div>
+        <div class="voice-nodes" id="voice-nodes"></div>
+        <div id="game-stage">
+            <div id="match-status" style="text-align: center; color: #667781;">
+                <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #000; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+                Searching for online players...
+            </div>
         </div>
-
-        <div class="controls">
-            <button class="btn btn-mic" id="mic-btn" onclick="toggleMyMic()">🎤 Mic: ON</button>
-            <button class="btn btn-quit" onclick="quitGame()">⛔ Quit</button>
+        <div class="game-footer">
+            <button class="f-btn" id="mic-btn" style="background: #000;" onclick="toggleMic()">🎤 Mic: ON</button>
+            <button class="f-btn" style="background: #ff4d4d;" onclick="exitGame()">⛔ Quit</button>
         </div>
     </div>
 
     <header>
-        <div class="top-bar"><span>XIT</span></div>
+        <div class="top-bar"><span onclick="toggleSidebar(true)">☰ XIT</span> <span>X</span></div>
         <div class="tabs">
             <div class="tab active" id="tab0" onclick="switchTab(0)">CHATS</div>
             <div class="tab" id="tab1" onclick="switchTab(1)">GAMES</div>
@@ -86,7 +107,12 @@
     </header>
 
     <div class="view-container" id="view-container">
-        <div class="view"></div> <div class="view" id="game-list"></div> <div class="view"></div> </div>
+        <div class="view"></div>
+        <div class="view" id="game-list">
+            <h3 style="padding: 15px;">Live Multiplayer</h3>
+            </div>
+        <div class="view"></div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -105,187 +131,175 @@
 
         let myUser = localStorage.getItem('xit_user');
         let currentRoom = null;
-        let myMicStatus = true;
-        let myRole = 'player';
+        let isMicEnabled = true;
+        let userRole = 'player';
 
-        const games = [
-            { id: 'ttt', name: 'Tic Tac Toe', max: 2, icon: '❌' },
-            { id: 'quiz', name: 'Brain Battle', max: 2, icon: '💡' },
-            { id: 'ludo', name: 'Ludo Express', max: 4, icon: '🎲' }
+        const gameConfigs = [
+            { id: 'ttt', name: 'Tic Tac Toe', icon: '❌', max: 2 },
+            { id: 'quiz', name: 'Brain Battle', icon: '💡', max: 2 },
+            { id: 'ludo', name: 'Ludo Express', icon: '🎲', max: 4 }
         ];
 
-        function doLogin() {
-            let u = document.getElementById('username').value.trim();
+        function login() {
+            let u = document.getElementById('username').value.trim().toLowerCase();
             if(u) { localStorage.setItem('xit_user', u); location.reload(); }
         }
 
         if(myUser) {
             document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('my-name-display').innerText = "@" + myUser;
+            document.getElementById('my-initial').innerText = myUser[0].toUpperCase();
             initApp();
         }
 
         function initApp() {
             const list = document.getElementById('game-list');
-            list.innerHTML = '<h3 style="padding:15px;">Live Multiplayer Games</h3>';
-            games.forEach(g => {
+            gameConfigs.forEach(g => {
                 list.innerHTML += `
-                    <div class="game-item">
-                        <span>${g.icon} <b>${g.name}</b></span>
-                        <button class="join-btn" onclick="startMatchmaking('${g.id}', ${g.max})">Auto Join</button>
+                    <div class="game-card">
+                        <span style="font-size: 30px;">${g.icon}</span>
+                        <div class="game-info"><b>${g.name}</b><br><small>Online Match</small></div>
+                        <button class="game-btn" onclick="matchmake('${g.id}', ${g.max})">Auto Join</button>
                     </div>`;
+            });
+
+            // Check if URL has room link
+            const urlParams = new URLSearchParams(window.location.search);
+            if(urlParams.has('room')) {
+                const room = urlParams.get('room');
+                const gid = urlParams.get('gid');
+                const m = urlParams.get('m');
+                promptJoin(gid, room, m);
+            }
+        }
+
+        function promptJoin(gid, room, m) {
+            if(confirm("Join Room " + room + " as Audience? (OK for Audience, Cancel for Player)")) {
+                joinRoom(gid, room, m, 'audience');
+            } else {
+                joinRoom(gid, room, m, 'player');
+            }
+        }
+
+        async function matchmake(gid, max) {
+            document.getElementById('game-screen').style.display = 'flex';
+            const matchRef = db.ref(`matchmaking/${gid}`);
+            
+            // Transaction for Atomic Matchmaking
+            matchRef.transaction((data) => {
+                if(!data) return { roomID: "R" + Date.now(), count: 1 };
+                if(data.count < max) {
+                    return { roomID: data.roomID, count: data.count + 1 };
+                } else {
+                    return { roomID: "R" + Date.now(), count: 1 };
+                }
+            }, (error, committed, snapshot) => {
+                if(committed) {
+                    const room = snapshot.val().roomID;
+                    joinRoom(gid, room, max, 'player');
+                }
             });
         }
 
-        async function startMatchmaking(gameId, maxPlayers) {
-            document.getElementById('game-screen').classList.add('open');
-            document.getElementById('game-name').innerText = "Matchmaking...";
+        function joinRoom(gid, room, max, role) {
+            currentRoom = room;
+            userRole = role;
+            document.getElementById('game-screen').style.display = 'flex';
             
-            const matchRef = db.ref(`matchmaking/${gameId}`);
-            const snap = await matchRef.once('value');
-            let roomID = null;
-
-            if(snap.exists()) {
-                const rooms = snap.val();
-                for(let id in rooms) {
-                    if(rooms[id].count < maxPlayers) { roomID = id; break; }
-                }
-            }
-
-            if(!roomID) {
-                roomID = "ROOM_" + Math.random().toString(36).substr(2, 6).toUpperCase();
-                await matchRef.child(roomID).set({ count: 1 });
-                myRole = 'player';
-            } else {
-                let currentCount = snap.val()[roomID].count;
-                if(currentCount < maxPlayers) {
-                    await matchRef.child(roomID).update({ count: currentCount + 1 });
-                    myRole = 'player';
-                } else {
-                    // Agar game full hai toh check audience
-                    const audSnap = await db.ref(`game_sessions/${roomID}/audience`).once('value');
-                    if(audSnap.size < 5) {
-                        myRole = 'audience';
-                    } else {
-                        alert("Room is full!"); return;
-                    }
-                }
-            }
-
-            currentRoom = roomID;
-            enterRoom(gameId, roomID, maxPlayers);
-        }
-
-        function enterRoom(gameId, roomID, maxPlayers) {
-            const sessionRef = db.ref(`game_sessions/${roomID}`);
-            const myPath = myRole === 'player' ? `players/${myUser}` : `audience/${myUser}`;
+            const sessionRef = db.ref(`game_sessions/${room}`);
+            const path = role === 'player' ? `players/${myUser}` : `audience/${myUser}`;
             
-            sessionRef.child(myPath).set({ mic: true, ts: Date.now() });
-            sessionRef.child(myPath).onDisconnect().remove();
+            sessionRef.child(path).set({ mic: true, ts: Date.now() });
+            sessionRef.child(path).onDisconnect().remove();
 
             sessionRef.on('value', snap => {
                 const data = snap.val() || {};
                 const players = data.players || {};
                 const audience = data.audience || {};
-                
                 updateVoiceUI(players, audience);
-                
-                const pCount = Object.keys(players).length;
-                document.getElementById('player-count').innerText = `${pCount}/${maxPlayers}`;
 
-                if(pCount >= maxPlayers) {
-                    document.getElementById('game-name').innerText = games.find(g=>g.id===gameId).name;
-                    if(gameId === 'ttt') initTTT(roomID, players);
+                const pCount = Object.keys(players).length;
+                if(pCount >= max) {
+                    document.getElementById('game-title').innerText = gid.toUpperCase();
+                    if(gid === 'ttt') runTTT(room, players);
+                    else document.getElementById('game-stage').innerHTML = "<h2>Game Started!</h2>";
                 }
             });
         }
 
-        function updateVoiceUI(players, audience) {
-            const bar = document.getElementById('voice-section');
-            bar.innerHTML = "";
-            
-            // Render Players
-            Object.keys(players).forEach(name => {
-                bar.innerHTML += createAvatarNode(name, 'player', players[name].mic);
-            });
-            
-            // Render Audience
-            Object.keys(audience).forEach(name => {
-                bar.innerHTML += createAvatarNode(name, 'audience', audience[name].mic);
+        function updateVoiceUI(p, a) {
+            const container = document.getElementById('voice-nodes');
+            container.innerHTML = "";
+            [...Object.keys(p).map(n=>({n, r:'player'})), ...Object.keys(a).map(n=>({n, r:'audience'}))].forEach(u => {
+                container.innerHTML += `
+                    <div class="node ${u.r}">
+                        <div class="avatar">${u.n[0].toUpperCase()}</div>
+                        <span style="font-size: 10px;">${u.n === myUser ? 'You' : u.n}</span>
+                    </div>`;
             });
         }
 
-        function createAvatarNode(name, role, mic) {
-            const isMuted = localStorage.getItem('mute_'+name) === 'true';
-            return `
-                <div class="user-card ${role}">
-                    <div class="avatar" onclick="toggleOpponentSound('${name}')">${name[0].toUpperCase()}</div>
-                    <span style="font-size:10px;">${name === myUser ? 'You' : name}</span>
-                    <div class="mute-label" style="display:${mic ? 'none' : 'block'}"></div>
-                    ${name !== myUser ? `<button onclick="toggleOpponentSound('${name}')" style="font-size:9px; border:none;">${isMuted ? '🔇' : '🔊'}</button>` : ''}
-                </div>`;
-        }
-
-        // --- Game Logic: Tic Tac Toe ---
-        function initTTT(roomID, players) {
-            const canvas = document.getElementById('game-canvas');
-            canvas.innerHTML = '<div class="ttt-grid" id="grid"></div>';
+        // --- Tic Tac Toe Fixed Logic ---
+        function runTTT(room, players) {
+            const stage = document.getElementById('game-stage');
+            stage.innerHTML = `<div class="ttt-grid" id="grid"></div>`;
             const grid = document.getElementById('grid');
-            for(let i=0; i<9; i++) grid.innerHTML += `<div class="cell" id="c${i}" onclick="playTTT(${i})"></div>`;
+            for(let i=0; i<9; i++) grid.innerHTML += `<div class="cell" id="c${i}" onclick="tttClick(${i})"></div>`;
 
-            db.ref(`game_sessions/${roomID}/state`).on('value', snap => {
+            db.ref(`game_sessions/${room}/state`).on('value', snap => {
                 const state = snap.val() || Array(9).fill("");
-                state.forEach((val, i) => {
-                    document.getElementById(`c${i}`).innerText = val;
-                });
+                state.forEach((val, i) => { document.getElementById(`c${i}`).innerText = val; });
             });
         }
 
-        async function playTTT(idx) {
-            if(myRole !== 'player') return;
+        async function tttClick(i) {
+            if(userRole !== 'player') return;
             const ref = db.ref(`game_sessions/${currentRoom}`);
-            const snap = await ref.once('value');
+            const snap = await ref.get();
             const players = Object.keys(snap.val().players).sort();
-            const mySymbol = players[0] === myUser ? "X" : "O";
+            const myMark = players[0] === myUser ? "X" : "O";
             
             let state = snap.val().state || Array(9).fill("");
-            
-            const xCount = state.filter(s => s === "X").length;
-            const oCount = state.filter(s => s === "O").length;
-            const turn = xCount <= oCount ? "X" : "O";
+            const xC = state.filter(s=>s==="X").length;
+            const oC = state.filter(s=>s==="O").length;
+            const turn = xC <= oC ? "X" : "O";
 
-            if(turn === mySymbol && !state[idx]) {
-                state[idx] = mySymbol;
+            if(turn === myMark && !state[i]) {
+                state[i] = myMark;
                 ref.child('state').set(state);
             }
         }
 
-        // --- Controls ---
-        function toggleMyMic() {
-            myMicStatus = !myMicStatus;
-            document.getElementById('mic-btn').innerText = myMicStatus ? "🎤 Mic: ON" : "🔇 Mic: OFF";
-            const path = myRole === 'player' ? 'players' : 'audience';
-            db.ref(`game_sessions/${currentRoom}/${path}/${myUser}/mic`).set(myMicStatus);
+        function toggleMic() {
+            isMicEnabled = !isMicEnabled;
+            document.getElementById('mic-btn').innerText = isMicEnabled ? "🎤 Mic: ON" : "🔇 Mic: OFF";
+            const p = userRole === 'player' ? 'players' : 'audience';
+            db.ref(`game_sessions/${currentRoom}/${p}/${myUser}/mic`).set(isMicEnabled);
         }
 
-        function toggleOpponentSound(name) {
-            const current = localStorage.getItem('mute_'+name) === 'true';
-            localStorage.setItem('mute_'+name, !current);
-            alert(name + (current ? " Unmuted" : " Muted"));
-            location.reload(); // Simple way to apply mute logic
+        function copyGameLink() {
+            const url = window.location.origin + window.location.pathname + `?room=${currentRoom}&gid=ttt&m=2`;
+            navigator.clipboard.writeText(url).then(() => alert("Link Copied! Share with friends."));
         }
 
-        function quitGame() {
+        function exitGame() {
             if(currentRoom) {
-                const path = myRole === 'player' ? 'players' : 'audience';
-                db.ref(`game_sessions/${currentRoom}/${path}/${myUser}`).remove();
+                const p = userRole === 'player' ? 'players' : 'audience';
+                db.ref(`game_sessions/${currentRoom}/${p}/${myUser}`).remove();
             }
-            document.getElementById('game-screen').classList.remove('open');
+            document.getElementById('game-screen').style.display = 'none';
+            window.history.replaceState({}, '', window.location.pathname);
             currentRoom = null;
         }
 
         function switchTab(i) {
             document.getElementById('view-container').style.transform = `translateX(-${i * 33.333}%)`;
             document.querySelectorAll('.tab').forEach((t, idx) => t.classList.toggle('active', idx === i));
+        }
+
+        function toggleSidebar(o) {
+            document.getElementById('sidebar').classList.toggle('open', o);
+            document.getElementById('overlay').style.display = o ? 'block' : 'none';
         }
     </script>
 </body>
